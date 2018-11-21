@@ -130,6 +130,59 @@ def ResNet50(input_tensor=None,trainable=False):
 
     x=ZeroPadding2D((3,3))(img_input)
     x=Convolution2D(64,(7,7),strides=(2,2),name='conv1',trainable=trainable)(x)
+    x=BatchNormalization(axis=bn_axis,name='bn_conv1')(x)
+    x=Activation('relu')(x)
+    x=MaxPooling2D((3,3),strides=(2,2))(x)
+
+    x=conv_block(x,3,[64,64,256],stage=2,
+                 block='a',strides=(1,1),trainable=trainable)
+    x=identity_block(x,3,[64,64,256],stage=2,block='b',
+                     trainable=trainable)
+    x=identity_block(x,3,[64,64,256],block='c',trainable=trainable)
+
+    x = conv_block(x, 3, [128, 128, 512], stage=3, block='a', trainable=trainable)
+    x = identity_block(x, 3, [128, 128, 512], stage=3, block='b', trainable=trainable)
+    x = identity_block(x, 3, [128, 128, 512], stage=3, block='c', trainable=trainable)
+    x = identity_block(x, 3, [128, 128, 512], stage=3, block='d', trainable=trainable)
+
+    x = conv_block(x, 3, [256, 256, 1024], stage=4, block='a', trainable=trainable)
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='b', trainable=trainable)
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='c', trainable=trainable)
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='d', trainable=trainable)
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='e', trainable=trainable)
+    x = identity_block(x, 3, [256, 256, 1024], stage=4, block='f', trainable=trainable)
+
+    return x
+
+def classifier_layers(x,input_shape,trainable=False):
+    #my backend is tensorflow
+    x=conv_block_td(x,3,[512,512,2048],stage=5,block='a',input_shape=input_shape,strides=(2,2),
+                    trainable=trainable)
+    x=identity_block_td(x,3,[512,512,2048],stage=5,block='b',
+                    trainable=trainable)
+    x=identity_block_td(x,3,[512,512,2048],stage=5,block='c',
+                        trainable=trainable)
+    x=TimeDistributed(AveragePooling2D((7,7)),name='avg_pool')(x)
+    return x
+
+def rpn(x,num_anchors):
+    x=Convolution2D(512,(3,3),padding='same',activation='relu',kernel_initializer='normal',name='rpn_conv1')(x)
+    x_class=Convolution2D(num_anchors,(1,1),activation='sigmoid',kernel_initializer='uniform',name='rpn_out_class')(x)
+    x_regr=Convolution2D(num_anchors*4,(1,1),activation='linear',kernel_initializer='zero',name='rpn_out_regress')(x)
+    return [x_class,x_regr,x]
+
+def classifier(base_layers,input_rois,num_rois,nb_classes=26,trainable=False):
+    pooling_regions=14
+    input_shape=(num_rois,14,14,1024)
+    out_roi_pool=RoIpoolingConv(pooling_regions,num_rois=num_rois)([base_layers,input_rois])
+    out=classifier_layers(out_roi_pool,input_shape=input_shape,trainable=True)
+    out=TimeDistributed(Flatten())(out)
+    out_class=TimeDistributed(Dense())
+
+
+
+
+
 
 
 
