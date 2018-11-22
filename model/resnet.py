@@ -171,13 +171,19 @@ def rpn(x,num_anchors):
     x_regr=Convolution2D(num_anchors*4,(1,1),activation='linear',kernel_initializer='zero',name='rpn_out_regress')(x)
     return [x_class,x_regr,x]
 
-def classifier(base_layers,input_rois,num_rois,nb_classes=26,trainable=False):
+def classifier(base_layers,input_rois,num_rois,nb_classes,trainable=False):
     pooling_regions=14
     input_shape=(num_rois,14,14,1024)
     out_roi_pool=RoIpoolingConv(pooling_regions,num_rois=num_rois)([base_layers,input_rois])
     out=classifier_layers(out_roi_pool,input_shape=input_shape,trainable=True)
     out=TimeDistributed(Flatten())(out)
-    out_class=TimeDistributed(Dense())
+    out_class=TimeDistributed(Dense(nb_classes,activation='softmax',kernel_initializer='zero'),
+                              name='dense_class_{}'.format(nb_classes))(out)
+    #no regression for background class
+    out_regr=TimeDistributed(Dense(4*(nb_classes-1),activation='linear',kernel_initializer='zero'),
+                             name='dense_regress_{}'.format(nb_classes))(out)
+    return [out_class,out_regr]
+
 
 
 
