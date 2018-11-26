@@ -1,4 +1,4 @@
-import os,cv2,numpy as np
+import os,cv2,numpy as np,random
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 def get_data(input_path):
@@ -21,7 +21,7 @@ def get_data(input_path):
             element_height=int(element.find('size').find('height').text)
             if len(element_objects)>0:
                 annotation_data={'filepath':imgs_path+element_filename,'width':element_width,
-                                 'height':element_height,'bboxes':[]}
+                                 'height':element_height,'bboxes':[],'type':"train"}
             for element_obj in element_objects:
                 class_name=element_obj.find('name').text
                 if class_name not in classes_count:
@@ -44,8 +44,12 @@ def get_data(input_path):
         except Exception as e:
             print(e)
             continue
+    random.shuffle(all_imgs)
+    for i in range(len(all_imgs)):
+        if i>=98 and i <140:
+            all_imgs[i]['type']='val'
+        elif i>=140:
+            all_imgs[i]['type']='test'
+        else:
+            pass
     return all_imgs,classes_count,class_mapping
-
-
-
-

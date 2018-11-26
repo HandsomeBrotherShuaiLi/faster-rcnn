@@ -36,7 +36,7 @@ class Config(object):
         self.classfier_max_overlap=0.5
         self.class_mapping=None
         #weight files
-        self.base_net_weight='resnet50_weights_tf_dim_ordering_tf_kernels.h5'
+        self.base_net_weight='weights/resnet50_weights_tf_dim_ordering_tf_kernels.h5'
         self.model_path="model_faster_rcnn.hdf5"
 
 
